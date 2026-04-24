@@ -9,6 +9,8 @@ import { getReadableAddress } from '../services/location';
 import { motion, AnimatePresence, useScroll, useTransform, useSpring } from 'framer-motion';
 import Logo from '../components/Logo';
 import Icon from '../components/Icon';
+import WelcomePopup from '../components/WelcomePopup';
+import MysteryBox from '../components/MysteryBox';
 
 const Home: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -22,6 +24,18 @@ const Home: React.FC = () => {
   const [stories, setStories] = useState<any[]>([]);
   const [activeStoryIndex, setActiveStoryIndex] = useState<number | null>(null);
   const [storyProgress, setStoryProgress] = useState(0);
+
+  const heroBanners = banners.filter(b => (!b.bannerType || b.bannerType === 'hero'));
+  const popupBanners = banners.filter(b => b.bannerType === 'popup');
+  const gifBanners = banners.filter(b => b.bannerType === 'gif');
+
+  useEffect(() => {
+    if (heroBanners.length <= 1) return;
+    const timer = setInterval(() => {
+      setActiveBanner(prev => (prev + 1) % heroBanners.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [heroBanners.length]);
   
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -113,11 +127,13 @@ const Home: React.FC = () => {
     
     // Setup timer based on initial load
     return () => clearInterval(timer);
-  }, []);
+  }, [settings?.dealEndTime]);
 
   // Separate useEffect for the Social Proof logic so we always have the freshest products list
   useEffect(() => {
     const proofTimer = setInterval(() => {
+       if (localStorage.getItem('hide_mock_purchases') === 'true') return;
+
        const names = [
           'Karim', 'Ayesha', 'Mominul', 'Nafis', 'Tasnim', 'Rahim', 'Jamil', 'Sadia', 'Farid', 'Imran', 
           'Tarek', 'Hasan', 'Rakib', 'Mehedi', 'Sumaiya', 'Anis', 'Sabbir', 'Arif', 'Riyad', 'Sanjida', 'Rubel', 'Nazmul'
@@ -141,7 +157,7 @@ const Home: React.FC = () => {
           item: randomItemTitle
        });
        setShowProof(true);
-       setTimeout(() => setShowProof(false), 4000);
+       setTimeout(() => setShowProof(false), 8000);
     }, 15000);
 
     return () => clearInterval(proofTimer);
@@ -214,6 +230,8 @@ const Home: React.FC = () => {
 
   return (
     <div className="relative pt-8 pb-24 px-6 md:px-12 bg-white max-w-[1440px] mx-auto min-h-screen font-inter">
+      <WelcomePopup banners={popupBanners} />
+      <MysteryBox products={products} />
       {/* Aesthetic Background Blobs */}
       <div className="blob bg-emerald-300/30 w-64 h-64 rounded-full top-0 left-[-10%] z-0"></div>
       <div className="blob bg-emerald-200/20 w-96 h-96 rounded-full top-[20%] right-[-10%] animation-delay-2000 z-0"></div>
@@ -255,9 +273,9 @@ const Home: React.FC = () => {
       </motion.div>
 
       {/* Stories Section */}
-      <div className="flex gap-4 overflow-x-auto no-scrollbar mb-8 py-4 px-4 -mx-4 items-center animate-stagger-1 w-[calc(100%+32px)] text-center relative z-10">
+      <div className="flex gap-4 overflow-x-auto no-scrollbar mb-8 py-4 px-1 items-center animate-stagger-1 w-full text-center">
          {stories.length > 0 ? stories.map((story, idx) => (
-            <div key={story.id} onClick={() => setActiveStoryIndex(idx)} className="flex flex-col items-center gap-2 cursor-pointer group shrink-0 relative z-10 hover-tilt">
+            <div key={story.id} onClick={() => setActiveStoryIndex(idx)} className="flex flex-col items-center gap-2 cursor-pointer group shrink-0 w-[72px] md:w-[88px]">
                <div className={`w-16 h-16 md:w-20 md:h-20 rounded-full border-2 border-white ring-2 ring-emerald-400 group-hover:ring-offset-2 transition-all flex items-center justify-center shadow-sm overflow-hidden bg-zinc-100`}>
                   {story.type === 'video' ? (
                      <video src={story.mediaUrl} className="w-full h-full object-cover" muted />
@@ -265,7 +283,7 @@ const Home: React.FC = () => {
                      <img src={story.mediaUrl} className="w-full h-full object-cover" alt="" />
                   )}
                </div>
-               <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-600 group-hover:text-black">{story.category}</span>
+               <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-600 group-hover:text-black w-full truncate">{story.category}</span>
             </div>
          )) : [
            { icon: 'fire', text: 'Trending', bg: 'bg-orange-100', color: 'text-orange-500' },
@@ -274,22 +292,22 @@ const Home: React.FC = () => {
            { icon: 'crown', text: 'Premium', bg: 'bg-purple-100', color: 'text-purple-500' },
            { icon: 'bolt', text: 'Flash', bg: 'bg-red-100', color: 'text-red-500' }
          ].map((story, idx) => (
-            <div key={idx} className="flex flex-col items-center gap-2 cursor-pointer group shrink-0 relative z-10 hover-tilt">
-               <div className={`w-16 h-16 md:w-20 md:h-20 rounded-full ${story.bg} border-2 border-white ring-2 ring-emerald-400 group-hover:ring-offset-2 transition-all flex items-center justify-center shadow-sm hover-glow`}>
-                  <Icon name={story.icon} className={`text-xl md:text-2xl ${story.color} group-hover:scale-110 transition-transform`} />
+            <div key={idx} className="flex flex-col items-center gap-2 cursor-pointer group shrink-0 w-[72px] md:w-[88px]">
+               <div className={`w-16 h-16 md:w-20 md:h-20 rounded-full ${story.bg} border-2 border-white ring-1 ring-zinc-200 group-hover:ring-emerald-400 group-hover:ring-2 group-hover:ring-offset-2 transition-all flex items-center justify-center shadow-sm`}>
+                  <Icon name={story.icon} className={`text-xl md:text-2xl ${story.color} transition-transform`} />
                </div>
-               <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-600 group-hover:text-black">{story.text}</span>
+               <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-600 group-hover:text-black w-full truncate">{story.text}</span>
             </div>
          ))}
       </div>
 
       <motion.div 
         ref={bannerContainerRef}
-        className={`relative mb-14 overflow-hidden rounded-[2.5rem] shadow-2xl z-10 border-4 border-white animate-stagger-2 hover-tilt ${banners.length > 0 ? 'block' : 'hidden'}`}
+        className={`relative mb-14 overflow-hidden rounded-[2.5rem] shadow-2xl z-10 border-4 border-white animate-stagger-2 hover-tilt ${heroBanners.length > 0 ? 'block' : 'hidden'}`}
       >
         <div className="absolute inset-0 bg-mesh-pattern opacity-30 mix-blend-overlay z-0 pointer-events-none"></div>
         <div className="flex transition-transform duration-1000 ease-[cubic-bezier(0.23, 1, 0.32, 1)]" style={{ transform: `translateX(-${activeBanner * 100}%)` }}>
-          {banners.map((banner, i) => (
+          {heroBanners.map((banner, i) => (
             <div key={i} className="min-w-full bg-[#06331e] h-[160px] md:h-[200px] lg:h-[260px] relative overflow-hidden flex items-center">
                <motion.img 
                 src={banner.imageUrl} 
@@ -309,7 +327,7 @@ const Home: React.FC = () => {
           ))}
         </div>
         <div className="absolute bottom-4 right-6 flex space-x-2 z-20">
-           {banners.map((_, i) => (
+           {heroBanners.map((_, i) => (
              <div key={i} onClick={() => setActiveBanner(i)} className={`h-1.5 rounded-full transition-all duration-500 cursor-pointer ${i === activeBanner ? 'w-8 bg-emerald-400' : 'w-2 bg-white/30 hover:bg-white/50'}`}></div>
            ))}
         </div>
@@ -519,6 +537,12 @@ const Home: React.FC = () => {
          </div>
       </div>
 
+      {gifBanners.length > 0 && (
+         <div className="mb-14 overflow-hidden rounded-3xl cursor-pointer hover-tilt" onClick={() => gifBanners[0].link && navigate(gifBanners[0].link)}>
+            <img src={gifBanners[0].imageUrl} alt="banner" className="w-full h-auto object-cover border border-zinc-100 shadow-sm rounded-3xl" />
+         </div>
+      )}
+
       <div className="flex justify-start mb-16 overflow-x-auto no-scrollbar gap-6 md:gap-10 pb-4 px-2 animate-stagger-2">
         {categories.map(cat => (
           <motion.button whileHover={{ y: -5 }} key={cat.name} onClick={() => setActiveCategory(cat.name === activeCategory ? 'All' : cat.name)} className={`flex flex-col items-center shrink-0 group`}>
@@ -534,7 +558,7 @@ const Home: React.FC = () => {
         <div className="flex justify-between items-end mb-10 px-2">
           <div>
             <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#06331e] mb-2 px-3 py-1 bg-emerald-50 rounded-full inline-block border border-emerald-100 shadow-sm backdrop-blur-md">Our Collection</h3>
-            <h2 className="text-2xl md:text-3xl font-black tracking-tight text-shine mt-4">New Arrivals.</h2>
+            <h2 className="text-lg md:text-xl font-black tracking-tight text-shine mt-4">New Arrivals.</h2>
           </div>
           <button onClick={() => navigate('/all-products')} className="text-[10px] font-bold uppercase tracking-widest bg-zinc-900 text-white px-5 py-2.5 rounded-full hover:bg-emerald-500 transition-colors flex items-center shadow-lg active:scale-95 group hover-tilt">
             View All <Icon name="arrow-right" className="ml-2 text-[8px] group-hover:translate-x-1 transition-transform" />
@@ -591,6 +615,12 @@ const Home: React.FC = () => {
         </div>
       </div>
 
+      {gifBanners.length > 1 && (
+         <div className="mb-14 mt-12 overflow-hidden rounded-3xl cursor-pointer hover-tilt" onClick={() => gifBanners[1].link && navigate(gifBanners[1].link)}>
+            <img src={gifBanners[1].imageUrl} alt="banner" className="w-full h-auto object-cover border border-zinc-100 shadow-sm rounded-3xl" />
+         </div>
+      )}
+
       <AnimatePresence>
         {quickViewImg && (
           <motion.div 
@@ -623,17 +653,40 @@ const Home: React.FC = () => {
               initial={{ opacity: 0, y: 50, scale: 0.9 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 50, scale: 0.9 }}
-              className="fixed bottom-24 left-6 z-[100] bg-white/95 backdrop-blur-xl border border-zinc-100 shadow-2xl rounded-2xl p-4 flex items-center space-x-4 max-w-[280px]"
+              className="fixed bottom-24 left-6 z-[100] bg-white/95 backdrop-blur-xl border border-zinc-100 shadow-2xl rounded-2xl p-4 max-w-[280px]"
             >
-               <div className="bg-emerald-100 text-emerald-600 w-10 h-10 rounded-full flex items-center justify-center shrink-0 shadow-inner">
-                  <Icon name="check" className="text-sm" />
+               <button 
+                  onClick={() => setShowProof(false)}
+                  className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center bg-zinc-100 rounded-full text-zinc-400 hover:text-black hover:bg-zinc-200 transition-all"
+               >
+                  <Icon name="times" className="text-[10px]" />
+               </button>
+               <div className="flex items-center space-x-4 mb-2 pr-4">
+                  <div className="bg-emerald-100 text-emerald-600 w-10 h-10 rounded-full flex items-center justify-center shrink-0 shadow-inner">
+                     <Icon name="check" className="text-sm" />
+                  </div>
+                  <div>
+                     <p className="text-[11px] text-zinc-500 font-medium leading-tight mb-1">
+                        <span className="font-bold text-zinc-900">{proofData.name}</span> from <span className="font-bold text-zinc-900">{proofData.location}</span> just bought
+                     </p>
+                     <p className="text-xs font-black text-emerald-600 truncate tracking-tight">{proofData.item}</p>
+                     <p className="text-[9px] text-zinc-400 mt-0.5 uppercase tracking-widest font-bold">Just now</p>
+                  </div>
                </div>
-               <div>
-                  <p className="text-[11px] text-zinc-500 font-medium leading-tight mb-1">
-                     <span className="font-bold text-zinc-900">{proofData.name}</span> from <span className="font-bold text-zinc-900">{proofData.location}</span> just bought
-                  </p>
-                  <p className="text-xs font-black text-emerald-600 truncate tracking-tight">{proofData.item}</p>
-                  <p className="text-[9px] text-zinc-400 mt-1 uppercase tracking-widest font-bold">Just now</p>
+               <div className="border-t border-zinc-100 pt-2 mt-1">
+                  <label className="flex items-center space-x-2 cursor-pointer group">
+                     <input 
+                        type="checkbox" 
+                        className="w-3 h-3 text-emerald-600 rounded focus:ring-emerald-500 border-zinc-300"
+                        onChange={(e) => {
+                           if (e.target.checked) {
+                              localStorage.setItem('hide_mock_purchases', 'true');
+                              setShowProof(false);
+                           }
+                        }}
+                     />
+                     <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest group-hover:text-zinc-600 transition-colors">Do not show again</span>
+                  </label>
                </div>
             </motion.div>
          )}
@@ -724,7 +777,7 @@ const Home: React.FC = () => {
                                      width="100%" 
                                      height="100%" 
                                      style={{ pointerEvents: 'none', objectFit: 'cover' }}
-                                     onProgress={(state) => {
+                                     onProgress={(state: any) => {
                                          if (state.playedSeconds > 0 && state.loadedSeconds > 0) {
                                              setStoryProgress(state.played * 100);
                                          }
@@ -734,7 +787,7 @@ const Home: React.FC = () => {
                                          else setActiveStoryIndex(null);
                                      }}
                                      config={{
-                                         youtube: { playerVars: { showinfo: 0, controls: 0, rel: 0, modestbranding: 1, playsinline: 1, disablekb: 1, fs: 0 } },
+                                         youtube: { playerVars: { showinfo: 0, controls: 0, rel: 0, modestbranding: 1, playsinline: 1, disablekb: 1, fs: 0 } as any },
                                          facebook: { appId: '29c39d8a7be8404a', attributes: { 'data-hide-controls': 'true', 'data-show-captions': 'false' } }
                                      }}
                                  />
@@ -743,6 +796,15 @@ const Home: React.FC = () => {
                      </div>
                   ) : (
                      <img src={stories[activeStoryIndex].mediaUrl} className="w-full h-full object-contain" alt="story" />
+                  )}
+
+                  {stories[activeStoryIndex].audioUrl && (
+                    <audio 
+                       src={`${stories[activeStoryIndex].audioUrl}#t=${stories[activeStoryIndex].audioStart || 0}`} 
+                       autoPlay 
+                       playsInline 
+                       className="hidden" 
+                    />
                   )}
 
                   {/* Click Areas */}

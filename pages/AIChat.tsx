@@ -150,7 +150,7 @@ const AIChat: React.FC = () => {
         onerror: (e) => console.error(e)
       },
       config: {
-        responseModalalities: [Modality.AUDIO],
+        responseModalities: [Modality.AUDIO],
         speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Zephyr' } } },
         systemInstruction: `You are Vibe AI, the helpful assistant for VibeGadget. You assist customers with product info, orders, and technical help. Be professional and friendly.`
       }

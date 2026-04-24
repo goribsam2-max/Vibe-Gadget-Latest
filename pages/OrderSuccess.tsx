@@ -1,22 +1,87 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import Icon from '../components/Icon';
 
 const OrderSuccess: React.FC = () => {
   const [searchParams] = useSearchParams();
   const orderId = searchParams.get('orderId');
+  const [showStatus, setShowStatus] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowStatus(true);
+    }, 2500); // Wait for the initial animation to finish
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center px-10 text-center animate-fade-in">
-      <div className="w-24 h-24 bg-f-gray rounded-[40px] flex items-center justify-center text-black mb-8 shadow-2xl shadow-black/5 ring-1 ring-gray-100">
-        <svg className="w-10 h-10" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-      </div>
-      <h1 className="text-2xl font-bold mb-2 tracking-tight">Order Confirmed</h1>
-      <p className="text-f-gray text-xs font-medium leading-relaxed mb-10">Your gadget is on its way. You can view the digital receipt or track it in your history.</p>
-      
-      <div className="space-y-4 w-full max-w-xs">
-        <Link to={`/e-receipt/${orderId}`} className="block w-full py-4 bg-[#1F2029] text-white rounded-2xl font-bold shadow-xl shadow-black/10 text-sm uppercase tracking-widest">Digital Receipt</Link>
-        <Link to="/" className="block w-full py-4 border-2 border-f-light text-f-gray rounded-2xl font-bold text-sm uppercase tracking-widest hover:border-black hover:text-black transition-all">Continue Exploring</Link>
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center px-10 text-center relative overflow-hidden font-inter">
+      {/* Background decorations */}
+      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[80px] pointer-events-none z-0"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-emerald-500/5 rounded-full blur-[80px] pointer-events-none z-0"></div>
+
+      {/* Main Content */}
+      <div className="relative z-10 w-full max-w-sm flex flex-col items-center">
+        <motion.div 
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: [0, 1.2, 1], opacity: 1 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="relative mb-10 w-32 h-32 flex items-center justify-center"
+        >
+          <motion.div 
+            animate={{ rotate: 360 }}
+            transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+            className="absolute inset-0 border-[3px] border-dashed border-emerald-500/30 rounded-full"
+          />
+          <motion.div 
+            initial={{ scale: 0 }} 
+            animate={{ scale: 1 }} 
+            transition={{ delay: 0.5, type: "spring" }} 
+            className="w-24 h-24 bg-[#06331e] rounded-full flex items-center justify-center text-emerald-400 shadow-[0_0_40px_rgba(6,51,30,0.4)]"
+          >
+            <Icon name="check" className="text-4xl" />
+          </motion.div>
+        </motion.div>
+
+        <motion.h1 
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.8 }}
+          className="text-3xl font-black mb-3 tracking-tight text-zinc-900"
+        >
+          Success!
+        </motion.h1>
+
+        <motion.div 
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 1 }}
+          className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 w-full mb-10 shadow-inner"
+        >
+           <div className="flex items-center space-x-3 text-emerald-800">
+             <Icon name="spinner-third" className="animate-spin text-lg shrink-0" />
+             <p className="text-sm font-bold leading-relaxed text-left">Your order is currently under review by our team.</p>
+           </div>
+        </motion.div>
+
+        <AnimatePresence>
+          {showStatus && (
+            <motion.div 
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              className="space-y-4 w-full"
+            >
+              <Link to={`/e-receipt/${orderId}`} className="block w-full py-4 bg-[#06331e] text-white rounded-full font-bold shadow-xl shadow-emerald-900/20 text-[11px] uppercase tracking-widest hover:bg-black transition-all active:scale-95">
+                View Digital Receipt
+              </Link>
+              <Link to="/" className="block w-full py-4 border border-zinc-200 bg-white text-zinc-600 rounded-full font-bold text-[11px] uppercase tracking-widest hover:border-zinc-300 hover:text-black transition-all active:scale-95 shadow-sm">
+                Continue Exploring
+              </Link>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

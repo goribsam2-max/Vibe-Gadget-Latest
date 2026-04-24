@@ -25,6 +25,7 @@ export interface Product {
   featured?: boolean;
   isOffer?: boolean;
   offerPrice?: number;
+  offerEndTime?: number;
   views?: number;
 }
 
@@ -35,7 +36,7 @@ export interface UserProfile {
   photoURL?: string;
   address?: string;
   phoneNumber?: string;
-  role: 'user' | 'admin';
+  role: 'user' | 'admin' | 'staff';
   isBanned: boolean;
   createdAt: number;
   registrationDate: number;
@@ -46,6 +47,9 @@ export interface UserProfile {
   osName?: string;
   browserName?: string;
   locationName?: string;
+  points?: number;
+  lastSpinDate?: number;
+  addresses?: any[];
 }
 
 export interface CartItem {
@@ -84,6 +88,7 @@ export interface Banner {
   description: string;
   link?: string;
   createdAt: number;
+  bannerType?: 'hero' | 'popup' | 'gif';
 }
 
 export interface Review {

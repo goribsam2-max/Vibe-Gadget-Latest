@@ -1,11 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc, collection, query, where, onSnapshot, deleteDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 import { Product, Review } from '../types';
 import { useNotify } from '../components/Notifications';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useScroll, useMotionValueEvent } from 'framer-motion';
 import Icon from '../components/Icon';
 
 const ProductDetails: React.FC = () => {
@@ -17,6 +18,7 @@ const ProductDetails: React.FC = () => {
   const [fullScreenImg, setFullScreenImg] = useState<string | null>(null);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [bundleItems, setBundleItems] = useState<Product[]>([]);
+  const [timeLeft, setTimeLeft] = useState<{ d: number, h: number, m: number, s: number } | null>(null);
   
   const notify = useNotify();
   const navigate = useNavigate();
@@ -70,6 +72,28 @@ const ProductDetails: React.FC = () => {
       }
     }
   }, [id, auth.currentUser]);
+
+  useEffect(() => {
+     let interval: HTMLInputElement | null | number = null;
+     if (product?.isOffer && product?.offerEndTime) {
+       interval = window.setInterval(() => {
+          const now = Date.now();
+          const distance = product.offerEndTime! - now;
+          if (distance < 0) {
+             setTimeLeft(null);
+             clearInterval(interval as number);
+          } else {
+             setTimeLeft({
+                d: Math.floor(distance / (1000 * 60 * 60 * 24)),
+                h: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+                m: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
+                s: Math.floor((distance % (1000 * 60)) / 1000)
+             });
+          }
+       }, 1000);
+     }
+     return () => { if (interval) clearInterval(interval as number); }
+  }, [product]);
 
   const toggleWishlist = async () => {
     if (!auth.currentUser) return notify("Please sign in to save items", "info");
@@ -251,6 +275,23 @@ const ProductDetails: React.FC = () => {
                  <span className="text-[10px] font-bold text-zinc-400 capitalize">({product.numReviews || 0} revs)</span>
               </div>
            </div>
+           {product.isOffer && product.offerEndTime && timeLeft && (
+             <div className="mt-4 bg-red-50 text-red-600 rounded-2xl p-4 border border-red-100 flex items-center justify-between w-full">
+               <div className="flex items-center space-x-2">
+                 <Icon name="clock" className="text-lg animate-pulse" />
+                 <span className="font-bold text-sm leading-none pt-0.5">Offer ends in:</span>
+               </div>
+               <div className="flex space-x-1 sm:space-x-2 font-black text-sm lg:text-base">
+                 <span className="bg-white px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg shadow-sm border border-red-100">{String(timeLeft.d).padStart(2, '0')}<span className="text-[10px] font-bold block text-red-400 mt-[-2px] uppercase">days</span></span>
+                 <span className="pt-2 sm:pt-3">:</span>
+                 <span className="bg-white px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg shadow-sm border border-red-100">{String(timeLeft.h).padStart(2, '0')}<span className="text-[10px] font-bold block text-red-400 mt-[-2px] uppercase">hrs</span></span>
+                 <span className="pt-2 sm:pt-3">:</span>
+                 <span className="bg-white px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg shadow-sm border border-red-100">{String(timeLeft.m).padStart(2, '0')}<span className="text-[10px] font-bold block text-red-400 mt-[-2px] uppercase">mins</span></span>
+                 <span className="pt-2 sm:pt-3">:</span>
+                 <span className="bg-white px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg shadow-sm border border-red-100">{String(timeLeft.s).padStart(2, '0')}<span className="text-[10px] font-bold block text-red-400 mt-[-2px] uppercase">secs</span></span>
+               </div>
+             </div>
+           )}
         </div>
 
         <div className="mb-12">
@@ -342,42 +383,46 @@ const ProductDetails: React.FC = () => {
            </div>
         </div>
 
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-xl border-t border-zinc-100 z-30 flex items-center space-x-3 lg:static lg:bg-transparent lg:border-0 lg:p-0 lg:mt-8">
-           <button 
-             onClick={() => addToCart(false)} 
-             className="flex-1 py-3.5 md:py-4 bg-white text-zinc-900 border border-zinc-200 rounded-2xl flex items-center justify-center space-x-2 text-[10px] md:text-[9px] font-bold uppercase tracking-widest hover:bg-zinc-50 transition-all active:scale-95 shadow-sm whitespace-nowrap"
-           >
-              <Icon name="shopping-bag" className="text-[10px]" />
-              <span className="hidden sm:inline">Add to Cart</span>
-              <span className="sm:hidden">Add</span>
-           </button>
-           <button 
-             onClick={() => addToCart(true)} 
-             className="flex-[2] py-3.5 md:py-4 bg-[#06331e] text-white rounded-2xl flex items-center justify-center space-x-2 text-[10px] md:text-[9px] font-bold uppercase tracking-widest hover:bg-black transition-all active:scale-95 shadow-lg shadow-emerald-900/20 whitespace-nowrap"
-           >
-              <span>Buy Now</span>
-              <Icon name="bolt" className="text-yellow-400 text-[10px] ml-1" />
-           </button>
-           <button 
-             onClick={toggleWishlist}
-             className={`w-12 h-12 md:w-14 md:h-14 shrink-0 flex items-center justify-center rounded-2xl border transition-all active:scale-90 shadow-sm ${isWishlisted ? 'bg-red-50 text-red-500 border-red-100' : 'bg-white text-zinc-400 border-zinc-200 hover:border-zinc-300 hover:text-zinc-600'}`}
-           >
-             <Icon name="heart" solid={isWishlisted} className="text-[13px]" />
-           </button>
-           <button 
-             onClick={() => {
-                if (navigator.share) {
-                   navigator.share({ title: product.name, url: window.location.href }).catch(() => {});
-                } else {
-                   navigator.clipboard.writeText(window.location.href);
-                   notify("Link copied to clipboard!", "success");
-                }
-             }}
-             className="w-12 h-12 md:w-14 md:h-14 shrink-0 flex items-center justify-center rounded-2xl border border-zinc-200 bg-white text-zinc-400 hover:border-zinc-300 hover:text-zinc-600 transition-all active:scale-90 shadow-sm"
-           >
-             <Icon name="share-alt" className="text-[13px]" />
-           </button>
-        </div>
+        {createPortal(
+          <div className="fixed bottom-6 left-0 right-0 w-full flex justify-center z-[100] px-4 pointer-events-none">
+             <div className="bg-white/95 backdrop-blur-xl border border-zinc-200 p-2.5 rounded-[2rem] flex items-center space-x-2 w-full max-w-md shadow-2xl pointer-events-auto">
+               <button 
+                 onClick={() => addToCart(false)} 
+                 className="flex-[1.2] py-3.5 bg-zinc-100 text-zinc-900 border border-transparent rounded-[1.5rem] flex items-center justify-center space-x-2 text-[10px] md:text-[9px] font-bold uppercase tracking-widest hover:bg-zinc-200 transition-all active:scale-95 whitespace-nowrap"
+               >
+                  <Icon name="shopping-bag" className="text-[10px]" />
+                  <span className="hidden sm:inline">Add</span>
+               </button>
+               <button 
+                 onClick={() => addToCart(true)} 
+                 className="flex-[2] py-3.5 bg-[#06331e] text-white rounded-[1.5rem] flex items-center justify-center space-x-2 text-[10px] md:text-[9px] font-bold uppercase tracking-widest hover:bg-black transition-all active:scale-95 shadow-lg shadow-emerald-900/20 whitespace-nowrap"
+               >
+                  <span>Buy Now</span>
+                  <Icon name="bolt" className="text-yellow-400 text-[10px] ml-1" />
+               </button>
+               <button 
+                 onClick={toggleWishlist}
+                 className={`w-11 h-11 shrink-0 flex items-center justify-center rounded-full border transition-all active:scale-90 shadow-sm ${isWishlisted ? 'bg-red-50 text-red-500 border-red-100' : 'bg-white text-zinc-400 border-zinc-200 hover:border-zinc-300 hover:text-zinc-600'}`}
+               >
+                 <Icon name="heart" solid={isWishlisted} className="text-[12px]" />
+               </button>
+               <button 
+                 onClick={() => {
+                    if (navigator.share) {
+                       navigator.share({ title: product.name, url: window.location.href }).catch(() => {});
+                    } else {
+                       navigator.clipboard.writeText(window.location.href);
+                       notify("Link copied to clipboard!", "success");
+                    }
+                 }}
+                 className="w-11 h-11 shrink-0 flex items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-400 hover:border-zinc-300 hover:text-zinc-600 transition-all active:scale-90 shadow-sm"
+               >
+                 <Icon name="share-alt" className="text-[12px]" />
+               </button>
+             </div>
+          </div>,
+          document.body
+        )}
       </div>
 
       <AnimatePresence>

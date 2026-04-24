@@ -30,7 +30,8 @@ const ManageBanners: React.FC = () => {
     title: '',
     description: '',
     link: '',
-    imageFile: null as File | null
+    imageFile: null as File | null,
+    bannerType: 'hero' as 'hero' | 'popup' | 'gif'
   });
 
   const fetchBanners = async () => {
@@ -62,7 +63,7 @@ const ManageBanners: React.FC = () => {
 
   const handleEdit = (banner: Banner) => {
     setEditingId(banner.id);
-    setFormData({ title: banner.title, description: banner.description, link: banner.link || '', imageFile: null });
+    setFormData({ title: banner.title, description: banner.description, link: banner.link || '', imageFile: null, bannerType: banner.bannerType || 'hero' });
   };
 
   const handleAdd = async (e: React.FormEvent) => {
@@ -77,7 +78,8 @@ const ManageBanners: React.FC = () => {
       const bannerData: any = {
         title: formData.title,
         description: formData.description,
-        link: formData.link
+        link: formData.link,
+        bannerType: formData.bannerType
       };
 
       if (imageUrl) bannerData.imageUrl = imageUrl;
@@ -165,8 +167,23 @@ const ManageBanners: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold text-zinc-400 uppercase mb-3 px-1">Banner Image</label>
+              <label className="block text-[10px] font-bold text-zinc-400 uppercase mb-3 px-1">Banner Type</label>
+              <select 
+                title="Banner Type"
+                className="w-full bg-zinc-50 p-5 rounded-2xl outline-none focus:ring-1 focus:ring-black transition-all font-bold text-sm shadow-inner cursor-pointer"
+                value={formData.bannerType || 'hero'}
+                onChange={e => setFormData({...formData, bannerType: e.target.value as any})}
+              >
+                <option value="hero">Hero (Top Slider)</option>
+                <option value="popup">Welcome Popup</option>
+                <option value="gif">Thin GIF Banner</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-bold text-zinc-400 uppercase mb-3 px-1">Banner Image (GIFs allowed)</label>
               <input 
+                title="Banner Image"
                 type="file" accept="image/*"
                 className="w-full bg-zinc-50 p-5 rounded-2xl outline-none text-[10px] font-bold uppercase shadow-inner cursor-pointer"
                 onChange={e => setFormData({...formData, imageFile: e.target.files?.[0] || null})}
@@ -226,8 +243,11 @@ const ManageBanners: React.FC = () => {
                      <button onClick={() => handleDelete(banner.id)} className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center hover:scale-110 transition-transform"><Icon name="trash" className="text-white" /></button>
                   </div>
                 </div>
-                <div className="p-8">
-                   <h3 className="font-black text-lg tracking-tight mb-2">{banner.title}</h3>
+                <div className="p-8 relative">
+                   <span className="absolute top-0 right-8 -translate-y-1/2 bg-black text-white text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-lg">
+                     {banner.bannerType === 'popup' ? 'Welcome Popup' : banner.bannerType === 'gif' ? 'GIF Banner' : 'Hero Slider'}
+                   </span>
+                   <h3 className="font-black text-lg tracking-tight mb-2 mt-2">{banner.title}</h3>
                    <p className="text-xs text-zinc-400 font-bold uppercase tracking-widest mb-4">{banner.description}</p>
                    {banner.link && <p className="text-[10px] font-mono text-zinc-300">Link: {banner.link}</p>}
                 </div>

@@ -41,6 +41,7 @@ const SEOProvider = () => {
 
         if (data.fbPixelId) {
           if (!(window as any).fbq) {
+            // @ts-ignore
             !function(f,b,e,v,n,t,s)
             {if((f as any).fbq)return;n=(f as any).fbq=function(){n.callMethod?
             n.callMethod.apply(n,arguments):n.queue.push(arguments)};
@@ -107,7 +108,6 @@ import AdminNotifications from './pages/admin/AdminNotifications';
 
 // Components
 import BottomNav from './components/BottomNav';
-import OneSignalPopup from './components/OneSignalPopup';
 import ScrollToTop from './components/ScrollToTop';
 import Logo from './components/Logo';
 import DesktopLayout from './components/DesktopLayout';
@@ -123,9 +123,9 @@ import ManageRiders from './pages/admin/ManageRiders';
 
 const PageWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <motion.div 
-    initial={{ opacity: 0, y: 5 }} 
-    animate={{ opacity: 1, y: 0 }} 
-    exit={{ opacity: 0, y: -5 }} 
+    initial={{ opacity: 0 }} 
+    animate={{ opacity: 1 }} 
+    exit={{ opacity: 0 }} 
     transition={{ duration: 0.15 }} 
     className="w-full min-h-screen"
   >
@@ -187,7 +187,6 @@ const AppContent: React.FC = () => {
     <DesktopLayout>
       <SEOProvider />
       <div className="min-h-screen selection:bg-black selection:text-white relative">
-        <OneSignalPopup />
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
             <Route path="/" element={<PageWrapper><Home /></PageWrapper>} />
